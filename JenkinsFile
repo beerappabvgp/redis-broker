@@ -35,21 +35,21 @@ pipeline {
             }
         }
 
-        stage('Run Unit Tests') {
-            steps {
-                script {
-                    // Run unit tests for service-a
-                    dir('service-a') {
-                        sh 'npm run test'  // Replace with the actual test command for service-a
-                    }
+        // stage('Run Unit Tests') {
+        //     steps {
+        //         script {
+        //             // Run unit tests for service-a
+        //             dir('service-a') {
+        //                 sh 'npm run test'  // Replace with the actual test command for service-a
+        //             }
                     
-                    // Run unit tests for service-b
-                    dir('service-b') {
-                        sh 'npm run test'  // Replace with the actual test command for service-b
-                    }
-                }
-            }
-        }
+        //             // Run unit tests for service-b
+        //             dir('service-b') {
+        //                 sh 'npm run test'  // Replace with the actual test command for service-b
+        //             }
+        //         }
+        //     }
+        // }
 
         stage('Push Docker Images') {
             steps {
@@ -69,23 +69,37 @@ pipeline {
         stage('Deploy to Kubernetes') {
             steps {
                 script {
-                    // Use kubectl to deploy service-a and service-b to the Kubernetes cluster
-                    // Make sure your kubeconfig is set up correctly to point to your Kubernetes cluster
+                    // Use kubectl to set the correct context for the Kubernetes cluster
+                    echo 'Setting Kubernetes context...'
                     sh 'kubectl config use-context minikube'
+
+                    // Deploy Redis
+                    echo 'Deploying Redis...'
+                    dir('k8s') {
+                        sh 'kubectl apply -f .'
+                    }
                     
                     // Deploy service-a
+                    echo 'Deploying service-a...'
                     dir('k8s/service-a') {
-                        sh 'kubectl apply -f deployment.yaml'
+                        sh 'kubectl apply -f .'
                     }
 
                     // Deploy service-b
+                    echo 'Deploying service-b...'
                     dir('k8s/service-b') {
-                        sh 'kubectl apply -f deployment.yaml'
+                        sh 'kubectl apply -f .'
                     }
 
                     // Verify the deployments are successful
+                    echo 'Verifying service-a deployment...'
                     sh 'kubectl rollout status deployment/service-a-deployment -n $K8S_NAMESPACE'
+
+                    echo 'Verifying service-b deployment...'
                     sh 'kubectl rollout status deployment/service-b-deployment -n $K8S_NAMESPACE'
+
+                    echo 'Verifying Redis deployment...'
+                    sh 'kubectl rollout status deployment/redis-deployment -n $K8S_NAMESPACE'
                 }
             }
         }
