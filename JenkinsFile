@@ -1,0 +1,119 @@
+pipeline {
+    agent any  // Run the pipeline on any available agent
+
+    environment {
+        // Define environment variables here
+        DOCKER_REGISTRY = 'docker.io/bharathbeerappa'   // Docker Hub registry
+        SERVICE_A_IMAGE = 'service-a:latest'
+        SERVICE_B_IMAGE = 'service-b:latest'
+        K8S_NAMESPACE = 'my-services'
+        REDIS_HOST = 'redis'  // Assuming Redis is running on the same network
+        REDIS_PORT = '6379'
+    }
+
+    stages {
+        stage('Clone Repository') {
+            steps {
+                // Clone the Git repository where your services and Dockerfiles are stored
+                git branch: 'main', url: 'https://github.com/beerappabvgp/redis-broker.git'
+            }
+        }
+
+        stage('Build Docker Images') {
+            steps {
+                script {
+                    // Build Docker image for service-a
+                    dir('service-a') {
+                        sh 'docker build -t $DOCKER_REGISTRY/$SERVICE_A_IMAGE .'
+                    }
+                    
+                    // Build Docker image for service-b
+                    dir('service-b') {
+                        sh 'docker build -t $DOCKER_REGISTRY/$SERVICE_B_IMAGE .'
+                    }
+                }
+            }
+        }
+
+        stage('Run Unit Tests') {
+            steps {
+                script {
+                    // Run unit tests for service-a
+                    dir('service-a') {
+                        sh 'npm run test'  // Replace with the actual test command for service-a
+                    }
+                    
+                    // Run unit tests for service-b
+                    dir('service-b') {
+                        sh 'npm run test'  // Replace with the actual test command for service-b
+                    }
+                }
+            }
+        }
+
+        stage('Push Docker Images') {
+            steps {
+                script {
+                    // Push the built Docker images to Docker Hub
+                    dir('service-a') {
+                        sh 'docker push $DOCKER_REGISTRY/$SERVICE_A_IMAGE'
+                    }
+
+                    dir('service-b') {
+                        sh 'docker push $DOCKER_REGISTRY/$SERVICE_B_IMAGE'
+                    }
+                }
+            }
+        }
+
+        stage('Deploy to Kubernetes') {
+            steps {
+                script {
+                    // Use kubectl to deploy service-a and service-b to the Kubernetes cluster
+                    // Make sure your kubeconfig is set up correctly to point to your Kubernetes cluster
+                    sh 'kubectl config use-context minikube'
+                    
+                    // Deploy service-a
+                    dir('k8s/service-a') {
+                        sh 'kubectl apply -f deployment.yaml'
+                    }
+
+                    // Deploy service-b
+                    dir('k8s/service-b') {
+                        sh 'kubectl apply -f deployment.yaml'
+                    }
+
+                    // Verify the deployments are successful
+                    sh 'kubectl rollout status deployment/service-a-deployment -n $K8S_NAMESPACE'
+                    sh 'kubectl rollout status deployment/service-b-deployment -n $K8S_NAMESPACE'
+                }
+            }
+        }
+
+        stage('Post-Deployment Test') {
+            steps {
+                script {
+                    // Run post-deployment tests to check if services are working fine
+                    // Assuming the services expose HTTP endpoints or other interfaces to test
+                    sh 'curl -f http://localhost:3001'  // Test service-a
+                    sh 'curl -f http://localhost:3002'  // Test service-b
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            echo 'Cleaning up and sending notifications'
+            // Additional cleanup and notification logic (if needed)
+        }
+
+        success {
+            echo 'Deployment was successful!'
+        }
+
+        failure {
+            echo 'Deployment failed!'
+        }
+    }
+}

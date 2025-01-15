@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-a-deployment
+  namespace: my-services
+  labels:
+    app: service-a
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: service-a
+  template:
+    metadata:
+      labels:
+        app: service-a
+    spec:
+      containers:
+      - name: service-a
+        image: bharathbeerappa/service-a:latest  # Replace with your actual image or image repository
+        ports:
+        - containerPort: 3001  # Port on which your service is running
+        env:
+        - name: REDIS_HOST
+          value: "redis"  # Assuming Redis is running in a different container (like a Redis service)
+        - name: REDIS_PORT
+          value: "6379"

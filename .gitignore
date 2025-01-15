@@ -1,0 +1,32 @@
+# Node.js dependencies
+node_modules/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# Environment variable files
+.env
+
+# Docker
+.docker/
+docker-compose.yml
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# npm
+package-lock.json
+
+# Build directories
+build/
+dist/
+
+# IDE-related files (you can add more based on your IDE)
+.idea/
+.vscode/
+
+# Miscellaneous
+*.tgz
