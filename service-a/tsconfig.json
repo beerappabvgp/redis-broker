@@ -1,0 +1,12 @@
+{
+  "compilerOptions": {
+    "target": "ES6",                    // or the version of JavaScript you prefer
+    "module": "CommonJS",                // Use CommonJS module system (for Node.js)
+    "strict": true,                      // Enable strict mode
+    "esModuleInterop": true,             // Enables default imports for CommonJS modules
+    "skipLibCheck": true,                // Skip library checks for faster compilation
+    "types": ["node"],                   // Include Node.js types
+    "outDir": "./dist",                  // Output folder for compiled files
+    "rootDir": "./src"                   // Folder where source TypeScript files are located
+  }
+}
